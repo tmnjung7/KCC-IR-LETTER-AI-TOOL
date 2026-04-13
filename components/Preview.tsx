@@ -27,13 +27,13 @@ const Preview: React.FC<PreviewProps> = ({ data }) => {
         <div className="flex justify-between items-end border-b-[3px] border-[#002B5B] pb-4 mb-6">
           <div className="flex flex-col">
             <span className="text-[#002B5B] text-sm font-bold tracking-[0.3em] mb-1">{data.date}</span>
-            <h1 className="text-[#002B5B] text-[72px] font-[900] italic tracking-[-0.05em] leading-[0.8]">IR LETTER</h1>
+            <h1 className="text-[#002B5B] text-[76px] font-display font-black tracking-tighter leading-[0.8]">IR LETTER</h1>
           </div>
           <div className="flex flex-col items-end">
              <div className="flex items-center gap-3 mb-1">
-                <span className="text-2xl font-black text-[#002B5B] tracking-tight">(주) KCC</span>
+                <span className="text-2xl font-display font-black text-[#002B5B] tracking-tight">(주) KCC</span>
              </div>
-             <div className="text-3xl font-bold text-gray-500 tracking-tight">{data.quarterTitle}</div>
+             <div className="text-3xl font-display font-bold text-gray-500 tracking-tight">{data.quarterTitle}</div>
           </div>
         </div>
 
@@ -42,7 +42,7 @@ const Preview: React.FC<PreviewProps> = ({ data }) => {
           <div className="col-span-7 flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <div className="w-1 h-5 bg-[#002B5B]"></div>
-              <h2 className="text-lg font-extrabold text-[#002B5B]">최근 분기별 실적 추이 <span className="text-[10px] font-medium text-gray-400 ml-2">(단위: 억원, %)</span></h2>
+              <h2 className="text-xl font-display font-bold text-[#002B5B] tracking-tight">최근 분기별 실적 추이 <span className="text-[11px] font-sans font-medium text-gray-400 ml-2 tracking-normal">(단위: 억원, %)</span></h2>
             </div>
             <div className="h-[220px] bg-[#f8fafc] rounded-xl p-4 border border-gray-100 flex justify-center items-center">
                <ComposedChart width={380} height={220} data={data.performanceHistory} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
@@ -94,17 +94,17 @@ const Preview: React.FC<PreviewProps> = ({ data }) => {
           <div className="col-span-5 flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <div className="w-1 h-5 bg-[#002B5B]"></div>
-              <h2 className="text-lg font-extrabold text-[#002B5B]">EARNINGS SUMMARY</h2>
+              <h2 className="text-xl font-display font-bold text-[#002B5B] tracking-tight">EARNINGS SUMMARY</h2>
             </div>
             <div className="flex-1 bg-white border-2 border-gray-50 rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-center">
               <div className="absolute top-0 right-0 w-16 h-16 bg-[#002B5B]/5 rounded-bl-full"></div>
-              <ul className="space-y-2.5">
+              <ul className="space-y-1.5">
                 {data.earningsSummary.map((line, idx) => {
                   const isSubItem = line.startsWith('-');
                   return (
-                    <li key={idx} className={`leading-snug ${isSubItem ? 'ml-4 text-[11px] text-gray-500 font-medium italic' : 'text-[13px] font-bold text-slate-800 flex items-start gap-2'}`}>
+                    <li key={idx} className={`leading-snug ${isSubItem ? 'ml-4 text-[12px] text-gray-500 font-medium italic' : 'text-[14px] font-bold text-slate-800 flex items-start gap-1.5'}`}>
                       {!isSubItem && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0"></span>}
-                      <span>{line.replace(/^- /, '')}</span>
+                      <span className={`${isSubItem ? 'text-justify break-keep' : 'whitespace-nowrap'}`}>{line.replace(/^- /, '')}</span>
                     </li>
                   );
                 })}
@@ -116,22 +116,22 @@ const Preview: React.FC<PreviewProps> = ({ data }) => {
         {/* Highlights Section */}
         <div className="grid grid-cols-1 gap-4">
           <div className="flex items-center justify-between border-b-2 border-gray-100 pb-2">
-              <h2 className="text-xl font-black italic tracking-tight text-[#002B5B]">BUSINESS HIGHLIGHTS</h2>
+              <h2 className="text-2xl font-display font-black tracking-tight text-[#002B5B]">BUSINESS HIGHLIGHTS</h2>
               <div className="h-1 flex-1 mx-4 bg-gray-50"></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {data.businessHighlights.map((bh, idx) => (
               <div key={idx} className="bg-[#f8fafc] p-4 rounded-2xl border border-gray-100 flex flex-col transition-all hover:shadow-md h-full">
-                <div className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-1 break-keep">{bh.title}</div>
-                <div className="text-[13px] font-extrabold text-slate-900 leading-snug mb-2 break-keep">
+                <div className="text-[12px] font-black text-blue-600 uppercase tracking-widest mb-1 break-keep">{bh.title}</div>
+                <div className="text-[15px] font-extrabold text-slate-900 leading-snug mb-2 break-keep">
                   {bh.subtitle}
                 </div>
                 <div className="w-6 h-1 bg-blue-500 mb-3"></div>
                 <ul className="space-y-1.5 flex-1">
                   {bh.details.map((detail, dIdx) => (
-                    <li key={dIdx} className="text-[11px] leading-relaxed text-slate-600 font-medium flex gap-1.5 break-keep">
+                    <li key={dIdx} className="text-[13px] leading-relaxed text-slate-600 font-medium flex gap-1.5 break-keep">
                       <span className="text-blue-400 font-bold shrink-0">·</span>
-                      <span>{detail}</span>
+                      <span className="text-justify">{detail}</span>
                     </li>
                   ))}
                 </ul>
@@ -145,13 +145,13 @@ const Preview: React.FC<PreviewProps> = ({ data }) => {
       <Page>
         <div className="flex flex-col h-full">
           {/* Key Indicators Section */}
-          <div className="mb-12">
-            <div className="flex items-center gap-2 mb-6">
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-5 bg-[#002B5B]"></div>
-              <h2 className="text-lg font-extrabold text-[#002B5B]">KEY INDICATORS <span className="text-[10px] font-medium text-gray-400 ml-2">(재무 건전성 지표)</span></h2>
+              <h2 className="text-xl font-display font-bold text-[#002B5B] tracking-tight">KEY INDICATORS <span className="text-[11px] font-sans font-medium text-gray-400 ml-2 tracking-normal">(재무 건전성 지표)</span></h2>
             </div>
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm h-[280px] flex justify-center items-center">
-                  <LineChart width={640} height={280} data={data.indicatorHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm h-[250px] flex justify-center items-center">
+                  <LineChart width={640} height={250} data={data.indicatorHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                     <XAxis dataKey="quarter" tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 9, fontWeight: 700, fill: '#cbd5e1' }} axisLine={false} tickLine={false} domain={[0, 'auto']} />
@@ -164,30 +164,65 @@ const Preview: React.FC<PreviewProps> = ({ data }) => {
             </div>
           </div>
 
-          {/* IR Contact Section */}
-          <div className="mb-12">
-            <div className="flex items-center gap-2 mb-6">
+          {/* IR Activities & Support Section */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-5 bg-[#002B5B]"></div>
-              <h2 className="text-lg font-extrabold text-[#002B5B]">IR CONTACT</h2>
+              <h2 className="text-xl font-display font-bold text-[#002B5B] tracking-tight">IR ACTIVITIES & SUPPORT <span className="text-[11px] font-sans font-medium text-gray-400 ml-2 tracking-normal">(IR 활동 및 지원)</span></h2>
             </div>
-            <div className="bg-[#1e293b] text-white rounded-2xl p-8 flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[200px]">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-[#f8fafc] border border-gray-100 rounded-2xl p-5 shadow-sm">
+                <h3 className="text-[13px] font-black text-[#002B5B] mb-3 border-b border-gray-200 pb-2">주요 IR 활동</h3>
+                <ul className="space-y-1.5">
+                  {data.irAction.map((item, idx) => {
+                    const isSub = item.startsWith('-');
+                    return (
+                      <li key={idx} className={`text-[12px] text-slate-600 font-medium flex gap-1.5 break-keep leading-snug ${isSub ? 'ml-3 text-gray-500' : ''}`}>
+                        {!isSub && <span className="text-blue-400 font-bold shrink-0">·</span>}
+                        <span className="text-justify">{item.replace(/^- /, '')}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div className="bg-[#f8fafc] border border-gray-100 rounded-2xl p-5 shadow-sm">
+                <h3 className="text-[13px] font-black text-[#002B5B] mb-3 border-b border-gray-200 pb-2">IR 지원 안내</h3>
+                <ul className="space-y-1.5">
+                  {data.irSupport.map((item, idx) => (
+                    <li key={idx} className="text-[12px] text-slate-600 font-medium flex gap-1.5 break-keep leading-snug">
+                      <span className="text-blue-400 font-bold shrink-0">·</span>
+                      <span className="text-justify">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* IR Contact Section */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-5 bg-[#002B5B]"></div>
+              <h2 className="text-xl font-display font-bold text-[#002B5B] tracking-tight">IR CONTACT</h2>
+            </div>
+            <div className="bg-[#1e293b] text-white rounded-2xl p-6 flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[160px]">
                <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/5 rounded-full"></div>
-               <div className="space-y-4 relative z-10">
+               <div className="space-y-3 relative z-10">
                   <div className="flex items-center gap-4">
-                     <div className="bg-blue-500/20 p-2 rounded-lg"><Phone className="w-5 h-5 text-blue-400" /></div>
+                     <div className="bg-blue-500/20 p-2 rounded-lg"><Phone className="w-4 h-4 text-blue-400" /></div>
                      <span className="text-sm font-bold">02-3480-5000 (교환 5)</span>
                   </div>
                   <div className="flex items-center gap-4">
-                     <div className="bg-blue-500/20 p-2 rounded-lg"><Globe className="w-5 h-5 text-blue-400" /></div>
+                     <div className="bg-blue-500/20 p-2 rounded-lg"><Globe className="w-4 h-4 text-blue-400" /></div>
                      <span className="text-sm font-bold">kccworld.irpage.co.kr</span>
                   </div>
                   <div className="flex items-center gap-4">
-                     <div className="bg-blue-500/20 p-2 rounded-lg"><Mail className="w-5 h-5 text-blue-400" /></div>
+                     <div className="bg-blue-500/20 p-2 rounded-lg"><Mail className="w-4 h-4 text-blue-400" /></div>
                      <span className="text-sm font-bold">ir@kccworld.co.kr</span>
                   </div>
                </div>
-               <div className="mt-6 pt-6 border-t border-white/10">
-                  <p className="text-xs text-gray-400 font-medium leading-relaxed">
+               <div className="mt-4 pt-4 border-t border-white/10">
+                  <p className="text-[11px] text-gray-400 font-medium leading-relaxed">
                     본 자료는 투자자의 이해를 돕기 위해 작성되었습니다. 자세한 내용은 공식 IR 홈페이지를 참고하시기 바랍니다.
                   </p>
                </div>

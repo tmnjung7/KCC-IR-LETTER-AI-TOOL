@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { IRLetterState, BusinessHighlight, PerformanceData, IndicatorData } from '../types';
-import { ChevronRight, Sparkles, Loader2 } from 'lucide-react';
+import { ChevronRight, Sparkles, Loader2, Trash2, Plus } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 interface EditorProps {
@@ -14,6 +14,59 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
   const [aiKeywords, setAiKeywords] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiDraft, setAiDraft] = useState<BusinessHighlight | null>(null);
+
+  const [showEarningsAI, setShowEarningsAI] = useState(false);
+  const [earningsInputs, setEarningsInputs] = useState({
+    revYoY: '', revQoQ: '', revKeywords: '',
+    opYoY: '', opQoQ: '', opKeywords: '',
+    niAmount: '', niKeywords: ''
+  });
+  const [isEarningsGenerating, setIsEarningsGenerating] = useState(false);
+
+  const generateEarningsSummary = async () => {
+    if (!process.env.GEMINI_API_KEY) {
+      alert("Gemini API Key가 설정되지 않았습니다.");
+      return;
+    }
+    setIsEarningsGenerating(true);
+    try {
+      const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const prompt = `
+      당신은 기업 IR 담당자입니다. 제공된 키워드를 바탕으로 분기 실적 요약의 '주요 근거'를 각각 1줄(개조식, 명사형 종결 e.g., ~함, ~됨, ~증가)로 간결하게 작성해주세요.
+
+      [입력 데이터]
+      - 매출액 키워드: ${earningsInputs.revKeywords}
+      - 영업이익 키워드: ${earningsInputs.opKeywords}
+      - 당기순이익 키워드: ${earningsInputs.niKeywords}
+
+      [출력 형식]
+      (매출액) YoY ${earningsInputs.revYoY}%, QoQ ${earningsInputs.revQoQ}%
+      - [매출액 주요 근거 1줄 요약]
+      (영업이익) YoY ${earningsInputs.opYoY}%, QoQ ${earningsInputs.opQoQ}%
+      - [영업이익 주요 근거 1줄 요약]
+      (당기순이익) ${earningsInputs.niAmount}억원
+      - [당기순이익 주요 근거 1줄 요약]
+
+      반드시 위 출력 형식 그대로 작성하고, 다른 부연 설명은 하지 마세요.
+      `;
+
+      const response = await genAI.models.generateContent({
+        model: 'gemini-2.5-pro',
+        contents: prompt,
+      });
+
+      const text = response.text;
+      if (text) {
+        onUpdate('earningsSummary', text.split('\n').filter(line => line.trim() !== ''));
+        setShowEarningsAI(false);
+      }
+    } catch (error) {
+      console.error("Error generating earnings summary:", error);
+      alert("AI 생성 중 오류가 발생했습니다.");
+    } finally {
+      setIsEarningsGenerating(false);
+    }
+  };
 
   const updateHighlight = (index: number, field: keyof BusinessHighlight, value: string | string[]) => {
     const newHighlights = [...data.businessHighlights];
@@ -30,6 +83,26 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
   const updateIndicator = (index: number, field: keyof IndicatorData, value: string | number) => {
     const newData = [...data.indicatorHistory];
     newData[index] = { ...newData[index], [field]: value };
+    onUpdate('indicatorHistory', newData);
+  };
+
+  const addPerformance = () => {
+    onUpdate('performanceHistory', [...data.performanceHistory, { quarter: '', revenue: 0, operatingProfit: 0, profitRate: 0 }]);
+  };
+
+  const removePerformance = (index: number) => {
+    const newData = [...data.performanceHistory];
+    newData.splice(index, 1);
+    onUpdate('performanceHistory', newData);
+  };
+
+  const addIndicator = () => {
+    onUpdate('indicatorHistory', [...data.indicatorHistory, { quarter: '', liquidityRatio: 0, equityRatio: 0, dependencyRatio: 0, debtRatio: 0 }]);
+  };
+
+  const removeIndicator = (index: number) => {
+    const newData = [...data.indicatorHistory];
+    newData.splice(index, 1);
     onUpdate('indicatorHistory', newData);
   };
 
@@ -107,11 +180,14 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
     setAiKeywords('');
   };
 
-  const sectionHeader = (title: string) => (
-    <h3 className="font-black text-[#002B5B] text-lg flex items-center gap-2 mb-4">
-      <div className="w-1.5 h-6 bg-[#002B5B] rounded-full"></div>
-      {title}
-    </h3>
+  const sectionHeader = (title: string, rightElement?: React.ReactNode) => (
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="font-black text-[#002B5B] text-lg flex items-center gap-2">
+        <div className="w-1.5 h-6 bg-[#002B5B] rounded-full"></div>
+        {title}
+      </h3>
+      {rightElement}
+    </div>
   );
 
   return (
@@ -131,7 +207,52 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
       </section>
 
       <section>
-        {sectionHeader("실적 요약 (Earnings Summary)")}
+        {sectionHeader("실적 요약 (Earnings Summary)", 
+          <button
+            onClick={() => setShowEarningsAI(!showEarningsAI)}
+            className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            AI 자동 작성
+          </button>
+        )}
+        
+        {showEarningsAI && (
+          <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-4 space-y-4">
+            <div className="grid grid-cols-[auto_1fr] gap-3 items-center">
+              <div className="text-xs font-bold text-slate-700 w-20">(매출액)</div>
+              <div className="flex gap-2">
+                <input placeholder="YoY %" className="border p-2 rounded text-xs w-20" value={earningsInputs.revYoY} onChange={e => setEarningsInputs({...earningsInputs, revYoY: e.target.value})} />
+                <input placeholder="QoQ %" className="border p-2 rounded text-xs w-20" value={earningsInputs.revQoQ} onChange={e => setEarningsInputs({...earningsInputs, revQoQ: e.target.value})} />
+                <input placeholder="주요 근거 키워드 (예: 건자재 수요 증가)" className="border p-2 rounded text-xs flex-1" value={earningsInputs.revKeywords} onChange={e => setEarningsInputs({...earningsInputs, revKeywords: e.target.value})} />
+              </div>
+
+              <div className="text-xs font-bold text-slate-700 w-20">(영업이익)</div>
+              <div className="flex gap-2">
+                <input placeholder="YoY %" className="border p-2 rounded text-xs w-20" value={earningsInputs.opYoY} onChange={e => setEarningsInputs({...earningsInputs, opYoY: e.target.value})} />
+                <input placeholder="QoQ %" className="border p-2 rounded text-xs w-20" value={earningsInputs.opQoQ} onChange={e => setEarningsInputs({...earningsInputs, opQoQ: e.target.value})} />
+                <input placeholder="주요 근거 키워드" className="border p-2 rounded text-xs flex-1" value={earningsInputs.opKeywords} onChange={e => setEarningsInputs({...earningsInputs, opKeywords: e.target.value})} />
+              </div>
+
+              <div className="text-xs font-bold text-slate-700 w-20">(당기순이익)</div>
+              <div className="flex gap-2">
+                <input placeholder="금액(억원)" className="border p-2 rounded text-xs w-40" value={earningsInputs.niAmount} onChange={e => setEarningsInputs({...earningsInputs, niAmount: e.target.value})} />
+                <input placeholder="주요 근거 키워드" className="border p-2 rounded text-xs flex-1" value={earningsInputs.niKeywords} onChange={e => setEarningsInputs({...earningsInputs, niKeywords: e.target.value})} />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={generateEarningsSummary}
+                disabled={isEarningsGenerating}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {isEarningsGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                AI 생성 및 적용
+              </button>
+            </div>
+          </div>
+        )}
+
         <textarea 
           className="w-full border-2 border-gray-100 rounded-xl p-4 text-sm min-h-[160px] leading-relaxed font-medium" 
           value={data.earningsSummary.join('\n')} 
@@ -141,21 +262,28 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
 
       <section>
         {sectionHeader("분기별 실적 데이터")}
-        <div className="bg-gray-50 p-4 rounded-2xl space-y-3 max-h-[300px] overflow-y-auto border-2 border-gray-100">
-          <div className="grid grid-cols-4 gap-2 text-[10px] font-black text-slate-500 uppercase tracking-wider text-center px-2">
+        <div className="bg-gray-50 p-4 rounded-2xl space-y-3 max-h-[350px] overflow-y-auto border-2 border-gray-100">
+          <div className="grid grid-cols-[60px_90px_90px_90px_24px] justify-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-wider text-center px-2">
             <div>분기</div>
             <div>매출액</div>
             <div>영업이익</div>
             <div>이익률(%)</div>
+            <div></div>
           </div>
           {data.performanceHistory.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-4 gap-2 items-center bg-white p-2 rounded-lg shadow-sm">
-              <input className="border text-xs p-1 rounded font-bold" value={item.quarter} onChange={e => updatePerformance(idx, 'quarter', e.target.value)} />
-              <input type="number" className="border text-xs p-1 rounded text-center" value={item.revenue} onChange={e => updatePerformance(idx, 'revenue', Number(e.target.value))} />
-              <input type="number" className="border text-xs p-1 rounded text-center" value={item.operatingProfit} onChange={e => updatePerformance(idx, 'operatingProfit', Number(e.target.value))} />
-              <input type="number" step="0.1" className="border text-xs p-1 rounded text-center" value={item.profitRate} onChange={e => updatePerformance(idx, 'profitRate', Number(e.target.value))} />
+            <div key={idx} className="grid grid-cols-[60px_90px_90px_90px_24px] justify-center gap-2 items-center bg-white p-2 rounded-lg shadow-sm mx-auto w-fit">
+              <input className="border text-[11px] p-1 rounded font-bold text-center" value={item.quarter} onChange={e => updatePerformance(idx, 'quarter', e.target.value)} />
+              <input type="number" className="border text-[11px] p-1 rounded text-center" value={item.revenue} onChange={e => updatePerformance(idx, 'revenue', Number(e.target.value))} />
+              <input type="number" className="border text-[11px] p-1 rounded text-center" value={item.operatingProfit} onChange={e => updatePerformance(idx, 'operatingProfit', Number(e.target.value))} />
+              <input type="number" step="0.1" className="border text-[11px] p-1 rounded text-center" value={item.profitRate} onChange={e => updatePerformance(idx, 'profitRate', Number(e.target.value))} />
+              <button onClick={() => removePerformance(idx)} className="text-red-400 hover:text-red-600 flex justify-center transition-colors" title="삭제">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           ))}
+          <button onClick={addPerformance} className="w-full py-2 mt-2 border-2 border-dashed border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:border-blue-300 hover:text-blue-600 flex items-center justify-center gap-1 transition-colors bg-white">
+            <Plus className="w-3.5 h-3.5" /> 분기 추가
+          </button>
         </div>
       </section>
 
@@ -260,23 +388,30 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
 
       <section>
         {sectionHeader("재무 건전성 지표 (Key Indicators)")}
-        <div className="bg-gray-50 p-4 rounded-2xl space-y-3 max-h-[300px] overflow-y-auto border-2 border-gray-100">
-          <div className="grid grid-cols-5 gap-2 text-[10px] font-black text-slate-500 uppercase tracking-wider text-center px-2">
+        <div className="bg-gray-50 p-4 rounded-2xl space-y-3 max-h-[350px] overflow-y-auto border-2 border-gray-100">
+          <div className="grid grid-cols-[60px_80px_80px_80px_80px_24px] justify-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-wider text-center px-2">
             <div>분기</div>
             <div>유동비율(%)</div>
             <div>자기자본(%)</div>
             <div>의존도(%)</div>
             <div>부채비율(%)</div>
+            <div></div>
           </div>
           {data.indicatorHistory.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-5 gap-2 items-center bg-white p-2 rounded-lg shadow-sm">
-              <input className="border text-xs p-1 rounded font-bold text-center" value={item.quarter} onChange={e => updateIndicator(idx, 'quarter', e.target.value)} />
-              <input type="number" step="0.1" className="border text-xs p-1 rounded text-center" value={item.liquidityRatio} onChange={e => updateIndicator(idx, 'liquidityRatio', Number(e.target.value))} />
-              <input type="number" step="0.1" className="border text-xs p-1 rounded text-center" value={item.equityRatio} onChange={e => updateIndicator(idx, 'equityRatio', Number(e.target.value))} />
-              <input type="number" step="0.1" className="border text-xs p-1 rounded text-center" value={item.dependencyRatio} onChange={e => updateIndicator(idx, 'dependencyRatio', Number(e.target.value))} />
-              <input type="number" step="0.1" className="border text-xs p-1 rounded text-center" value={item.debtRatio} onChange={e => updateIndicator(idx, 'debtRatio', Number(e.target.value))} />
+            <div key={idx} className="grid grid-cols-[60px_80px_80px_80px_80px_24px] justify-center gap-2 items-center bg-white p-2 rounded-lg shadow-sm mx-auto w-fit">
+              <input className="border text-[11px] p-1 rounded font-bold text-center" value={item.quarter} onChange={e => updateIndicator(idx, 'quarter', e.target.value)} />
+              <input type="number" step="0.1" className="border text-[11px] p-1 rounded text-center" value={item.liquidityRatio} onChange={e => updateIndicator(idx, 'liquidityRatio', Number(e.target.value))} />
+              <input type="number" step="0.1" className="border text-[11px] p-1 rounded text-center" value={item.equityRatio} onChange={e => updateIndicator(idx, 'equityRatio', Number(e.target.value))} />
+              <input type="number" step="0.1" className="border text-[11px] p-1 rounded text-center" value={item.dependencyRatio} onChange={e => updateIndicator(idx, 'dependencyRatio', Number(e.target.value))} />
+              <input type="number" step="0.1" className="border text-[11px] p-1 rounded text-center" value={item.debtRatio} onChange={e => updateIndicator(idx, 'debtRatio', Number(e.target.value))} />
+              <button onClick={() => removeIndicator(idx)} className="text-red-400 hover:text-red-600 flex justify-center transition-colors" title="삭제">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           ))}
+          <button onClick={addIndicator} className="w-full py-2 mt-2 border-2 border-dashed border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:border-blue-300 hover:text-blue-600 flex items-center justify-center gap-1 transition-colors bg-white">
+            <Plus className="w-3.5 h-3.5" /> 분기 추가
+          </button>
         </div>
       </section>
 
