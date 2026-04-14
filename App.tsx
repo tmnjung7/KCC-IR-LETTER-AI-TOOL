@@ -82,11 +82,22 @@ const App: React.FC = () => {
     window.print();
   };
 
+  const getApiKey = () => {
+    const key = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string | undefined);
+    if (key) return key;
+    return localStorage.getItem('USER_GEMINI_API_KEY') || null;
+  };
+
   const translateToEnglish = async () => {
     if (lang === 'ENG') return;
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      alert("Gemini API Key가 설정되지 않았습니다. AI 자동작성 기능을 먼저 사용하여 API Key를 입력해주세요.");
+      return;
+    }
     setIsTranslating(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Translate the following IR Letter JSON data from Korean to English. 

@@ -24,7 +24,7 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
   const [isEarningsGenerating, setIsEarningsGenerating] = useState(false);
 
   const getApiKey = () => {
-    let key = process.env.GEMINI_API_KEY;
+    let key = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string | undefined);
     if (!key) {
       key = localStorage.getItem('USER_GEMINI_API_KEY') || null;
       if (!key) {
