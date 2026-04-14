@@ -23,14 +23,29 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
   });
   const [isEarningsGenerating, setIsEarningsGenerating] = useState(false);
 
+  const getApiKey = () => {
+    let key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      key = localStorage.getItem('USER_GEMINI_API_KEY') || null;
+      if (!key) {
+        key = window.prompt("Vercel 환경에 Gemini API Key가 설정되지 않았습니다.\n직접 API Key를 입력해주세요 (브라우저에 임시 저장됩니다):");
+        if (key) {
+          localStorage.setItem('USER_GEMINI_API_KEY', key);
+        }
+      }
+    }
+    return key;
+  };
+
   const generateEarningsSummary = async () => {
-    if (!process.env.GEMINI_API_KEY) {
-      alert("Gemini API Key가 설정되지 않았습니다.");
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      alert("API Key가 필요합니다.");
       return;
     }
     setIsEarningsGenerating(true);
     try {
-      const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const genAI = new GoogleGenAI({ apiKey });
       const prompt = `
       당신은 기업 IR 담당자입니다. 제공된 키워드를 바탕으로 분기 실적 요약의 '주요 근거'를 각각 1줄(개조식, 명사형 종결 e.g., ~함, ~됨, ~증가)로 간결하게 작성해주세요.
 
@@ -107,12 +122,18 @@ const Editor: React.FC<EditorProps> = ({ data, onUpdate }) => {
   };
 
   const handleGenerateAI = async (index: number) => {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      alert("API Key가 필요합니다.");
+      return;
+    }
+    
     setIsGenerating(true);
     setAiDraft(null);
     const targetHighlight = data.businessHighlights[index];
     
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `
       다음은 KCC IR 레터의 '${targetHighlight.title}' 섹션에 대한 키워드입니다.
       이 키워드들을 바탕으로 투자자들에게 신뢰감을 줄 수 있는 전문적인 IR 문구를 작성해주세요.
