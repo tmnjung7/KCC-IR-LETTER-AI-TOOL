@@ -45,7 +45,7 @@ export const getInitialStateKor = (): IRLetterState => {
     ],
     businessHighlights: [
       { title: "분기 실적 요약", subtitle: "", details: [] },
-      { title: "재무구조 안정화", subtitle: "", details: [] },
+      { title: "부문별 주요이슈", subtitle: "", details: [] },
       { title: "유기실리콘 동향", subtitle: "", details: [] },
       { title: "향후 전망 및 전략", subtitle: "", details: [] }
     ],
