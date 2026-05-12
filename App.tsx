@@ -70,7 +70,7 @@ const App: React.FC = () => {
       title: data.quarterTitle || '제목 없음',
       data: JSON.parse(JSON.stringify(data))
     };
-    setSavedDrafts(prev => [newDraft, ...prev].slice(0, 10)); // Keep last 10
+    setSavedDrafts(prev => [newDraft, ...prev].slice(0, 10));
     alert('현재 내용이 임시저장되었습니다.');
   };
 
@@ -99,7 +99,7 @@ const App: React.FC = () => {
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.1-flash-lite',
         contents: `Translate the following IR Letter JSON data from Korean to English. 
         Maintain professional financial and Investor Relations terminology. 
         Keep the structure of 'performanceHistory' and 'indicatorHistory' intact.
